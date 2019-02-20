@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+ "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bestnet.imp.StudentImp">
+<!-- 
+namespace:名称空间;指定为接口的全类名
+id：唯一标识
+resultType：返回值类型
+#{id}：从传递过来的参数中取出id值
+
+public Employee getEmpById(Integer id);
+ -->
+	<select id="qryStudentById" resultType="com.bestnet.entity.StudentEntity">
+		select * from student where id = #{id}
+	</select>
+
+    <!--
+    说明：
+        useGeneratedKeys:针对mysql数据库设置的id自增长
+        keyProperty：设置主键返回值字段名称
+    注意：
+        1.使用useGeneratedKeys属性设置主键id自增长的前提是mysql中id字段必须设置了自增长（AUTO_INCREMENT），
+          不然会报Field 'id' doesn't have a default value错误
+        2.对于新增需要新增数据的主键id，需要设置keyProperty属性指定主键名称。其次在接口方法中返回值类型可以是void也可以是int、long...，
+          其中返回类型为数值类型表达的意思为数据新增的条数。获取新增的主键值，通过实体bean的getId获取。
+    -->
+    <insert id="addStudentInfo" useGeneratedKeys="true" keyProperty="id" parameterType="com.bestnet.entity.StudentEntity">
+        insert into student (name,sex) values (#{name},#{sex})
+    </insert>
+    
+    <!--
+        update可以不用指定parameterType类型
+    -->
+    <update id="updStudentInfo">
+        update student set name=#{name},sex=#{sex} where id=#{id}
+    </update>
+
+    <delete id="delStudentInfo">
+        delete from student where id=#{id}
+    </delete>
+
+    <!-- ***************************************参数解析*************************************** -->
+    <!--
+        注意：
+            问题：当接口定义多个参数传入时，映射sql不能在使用#{参数名}，否则会报Parameter 'id' not found. Available parameters are [1, 0, param1, param2]
+            错误
+            解决办法：①映射sql使用#{param1},#{param2}...取值
+                     ②可以在接口传参加入@param("参数名称"),映射sql用#{"参数名称"}取值
+    -->
+    <select id="qryStudentByIdAndName" resultType="com.bestnet.entity.StudentEntity" >
+        select * from student where id = #{id_} and name=#{name_}
+    </select>
+    
+
+</mapper>

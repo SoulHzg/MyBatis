@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bestnet.imp.CourseImp">
+
+    <select id="qryCourseById" resultType="com.bestnet.entity.CourseEntity">
+        select * from course where id = #{id}
+    </select>
+    
+    <!-- collection嵌套-->
+    <resultMap id="qryCourseAndListStudent1" type="com.bestnet.entity.CourseEntity">
+        <id column="c_id" property="id"></id>
+        <result column="c_name" property="name"></result>
+        <collection property="studentList" ofType="com.bestnet.entity.StudentEntity">
+            <id column="id" property="id"></id>
+            <result column="name" property="name"></result>
+            <result column="sex" property="sex"></result>
+        </collection>
+    </resultMap>
+
+    <select id="qryCourseAndListStudent" resultMap="qryCourseAndListStudent1">
+        select c.id as c_id,c.name as c_name,s.id,s.name,s.sex,s.course_id
+        from course c left join student s on c.id = s.course_id where c.id=#{id}
+    </select>
+
+    <!-- collection分步 -->
+    <!--
+        注意：collection中的column属性的值为映射sql中查询出来的列名
+    -->
+    <resultMap id="qryCourseAndListStudentByCollection" type="com.bestnet.entity.CourseEntity">
+        <id column="id" property="id"></id>
+        <result column="name" property="name"></result>
+        <collection property="studentList" select="com.bestnet.imp.StudentImp.qryStudentByCourseId" column="id" fetchType="lazy"></collection>
+    </resultMap>
+    <select id="qryCourseAndListStudent2" resultMap="qryCourseAndListStudentByCollection">
+        select * from course where id=#{id}
+    </select>
+</mapper>

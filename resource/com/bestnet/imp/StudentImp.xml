@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+ "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bestnet.imp.StudentImp">
+<!-- 
+namespace:名称空间;指定为接口的全类名
+id：唯一标识
+resultType：返回值类型
+#{id}：从传递过来的参数中取出id值
+
+public Employee getEmpById(Integer id);
+ -->
+	<select id="qryStudentById" resultType="com.bestnet.entity.StudentEntity">
+		select * from student where id = #{id}
+	</select>
+
+    <!--
+    说明：
+        useGeneratedKeys:针对mysql数据库设置的id自增长
+        keyProperty：设置主键返回值字段名称
+    注意：
+        1.使用useGeneratedKeys属性设置主键id自增长的前提是mysql中id字段必须设置了自增长（AUTO_INCREMENT），
+          不然会报Field 'id' doesn't have a default value错误
+        2.对于新增需要新增数据的主键id，需要设置keyProperty属性指定主键名称。其次在接口方法中返回值类型可以是void也可以是int、long...，
+          其中返回类型为数值类型表达的意思为数据新增的条数。获取新增的主键值，通过实体bean的getId获取。
+    -->
+    <insert id="addStudentInfo" useGeneratedKeys="true" keyProperty="id" parameterType="com.bestnet.entity.StudentEntity">
+        insert into student (name,sex) values (#{name},#{sex})
+    </insert>
+    
+    <!--
+        update可以不用指定parameterType类型
+    -->
+    <update id="updStudentInfo">
+        update student set name=#{name},sex=#{sex} where id=#{id}
+    </update>
+
+    <delete id="delStudentInfo">
+        delete from student where id=#{id}
+    </delete>
+
+    <!-- ***************************************参数解析*************************************** -->
+    <!--
+        注意：
+            问题：当接口定义多个参数传入时，映射sql不能在使用#{参数名}，否则会报Parameter 'id' not found. Available parameters are [1, 0, param1, param2]
+            错误
+            解决办法：①映射sql使用#{param1},#{param2}...取值
+                     ②可以在接口传参加入@param("参数名称"),映射sql用#{"参数名称"}取值
+    -->
+    <select id="qryStudentByIdAndName" resultType="com.bestnet.entity.StudentEntity" >
+        select * from student
+        <where>
+            <if test="sex_!=null">
+                and sex=#{sex_}
+            </if>
+            <if test="name_!=null">
+                and name=#{name_}
+            </if>
+            <if test="id_ != null">
+                and id = #{id_}
+            </if>
+        </where>
+    </select>
+
+    <insert id="addStudentByList" useGeneratedKeys="true" keyProperty="id" parameterType="com.bestnet.entity.StudentEntity">
+        insert into student (name,sex) values (#{list[0]},#{list[1]})
+    </insert>
+
+    <!-- *******************************查询类型list<类名>，map，map<属性，类名>***************************************** -->
+    <!--
+        注意：返回结果为list<Object>时，resultType为结果集javabean
+    -->
+    <select id="qryStudentReturnList" resultType="com.bestnet.entity.StudentEntity">
+        select * from student where name like #{name}
+    </select>
+    <!--
+            注意：返回结果为map时，resultType为map(MyBatis中的别名)
+        -->
+    <select id="qryStudentReturnMap" resultType="map">
+        select * from student where id=#{id}
+    </select>
+
+    <!--
+        注意：返回结果为map<属性，类名>时，接口需要加上@MapKey确定map的返回key的列值
+    -->
+    <select id="qryStudentReturnMaps" resultType="com.bestnet.entity.StudentEntity">
+        select * from student where name like #{name}
+    </select>
+
+
+    <!-- ********************************association嵌套、分步骤、懒加载***************************************** -->
+    <!--使用resultMap级联查询-->
+    <!--
+        注意：①当resultMap没有指定时，报Could not find result map错误
+             ②resultMap中内节点的column属性表示映射sql查询的名称，property表示javabean中属性名称
+    -->
+    <resultMap id="qryByResultMap" type="com.bestnet.entity.StudentEntity">
+        <id column="id" property="id"></id>
+        <result column="name" property="name"></result>
+        <result column="sex" property="sex"></result>
+        <result column="c_id" property="courseEntity.id"></result>
+        <result column="c_name" property="courseEntity.name"></result>
+    </resultMap>
+    <select id="qryStudentReturnResultMap" resultMap="qryByResultMap2">
+        select s.id,s.name,s.sex,s.course_id,c.id as c_id,c.name as c_name
+        from student s,course c
+        where s.course_id = c.id and s.id = #{id}
+    </select>
+
+    <!--association嵌套-->
+    <resultMap id="qryByResultMap2" type="com.bestnet.entity.StudentEntity">
+        <id column="id" property="id"></id>
+        <result column="name" property="name"></result>
+        <result column="sex" property="sex"></result>
+        <association property="courseEntity" javaType="com.bestnet.entity.CourseEntity">
+            <id column="c_id" property="id"></id>
+            <result column="c_name" property="name"></result>
+        </association>
+    </resultMap>
+
+    <!-- association分布 -->
+    <resultMap id="qryByResultMap3" type="com.bestnet.entity.StudentEntity">
+        <id column="id" property="id"></id>
+        <result column="name" property="name"></result>
+        <result column="sex" property="sex"></result>
+        <association property="courseEntity" select="com.bestnet.imp.CourseImp.qryCourseById"
+                     column="course_id" ></association>
+    </resultMap>
+    <select id="qryStudentReturnResultMap2" resultMap="qryByResultMap3">
+        select * from student where id = #{id}
+    </select>
+
+    <!-- collection集合查询 -->
+    <select id="qryStudentByCourseId" resultType="com.bestnet.entity.StudentEntity">
+        select * from student where course_id=#{course_id}
+    </select>
+
+</mapper>
